@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DA493ACC-9EA5-4088-B55A-A733C0A3F07C}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>Initiator</RootNamespace>
-    <AssemblyName>Initiator</AssemblyName>
+    <ProjectGuid>{34E3AB60-3A83-46A2-BAEF-E1F810795B18}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Common</RootNamespace>
+    <AssemblyName>Common</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -42,21 +40,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\NumberGeneratedEventArgs.cs" />
-    <Compile Include="NetworkCommandProcessor.cs" />
-    <Compile Include="NumberGenerator.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Client.cs" />
+    <Compile Include="Delegates.cs" />
+    <Compile Include="Enums\ServerType.cs" />
+    <Compile Include="Enums\HardBitDirection.cs" />
     <Compile Include="FileWriter.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{34e3ab60-3a83-46a2-baef-e1f810795b18}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
+    <Compile Include="Models\Command.cs" />
+    <Compile Include="ConsoleCommandReader.cs" />
+    <Compile Include="Enums\ApplicationState.cs" />
+    <Compile Include="Enums\CommandType.cs" />
+    <Compile Include="Extensions\NetworkStreamExtensions.cs" />
+    <Compile Include="Models\Event\CommunicationErrorEventArgs.cs" />
+    <Compile Include="Models\Event\UserNotificationAvaliableEventArgs.cs" />
+    <Compile Include="Models\Event\MessageReceivedEventArgs.cs" />
+    <Compile Include="Models\Event\StartCommandEventArgs.cs" />
+    <Compile Include="Models\Event\StateMessageReceivedEventArgs.cs" />
+    <Compile Include="Models\Event\StopCommandEventArgs.cs" />
+    <Compile Include="Models\Event\StringEventArgs.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SerializableGuid.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
