@@ -4,31 +4,28 @@ using System.Text;
 
 namespace Common
 {
-    public class FileWriter : IDisposable
+    public class FileWriter
     {
-        private static FileStream _stream;
-        private static StreamWriter _streamWriter;
-
+        private readonly String _filePath;
 
         public FileWriter(String filePath)
         {
-            _stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            _streamWriter = new StreamWriter(_stream, Encoding.UTF8);
+            _filePath = filePath;
+            if (File.Exists(_filePath))
+                File.Delete(_filePath);
         }
 
 
         // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
         public void WriteLine(String text)
         {
-            _streamWriter.WriteLine(text);
-        }
-
-
-        // IDisposable ////////////////////////////////////////////////////////////////////////////
-        public void Dispose()
-        {
-            _streamWriter?.Dispose();
-            _stream?.Dispose();
+            using (var stream = new FileStream(_filePath, FileMode.Append, FileAccess.Write))
+            {
+                using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+                {
+                    streamWriter.WriteLine(text);
+                }
+            }
         }
     }
 }

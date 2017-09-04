@@ -1,58 +1,48 @@
 ﻿using Common;
-using Common.Enums;
-using Common.Models.Event;
+using Echo.Models;
+using GalaSoft.MvvmLight.Messaging;
+using Microsoft.Practices.Unity;
 using System;
 
 namespace Echo
 {
     class Program
     {
-        private const ServerType Type = ServerType.Echo;
-
-        private static String _proxyAddress;
-        private static Int32 _proxyPort;
-        private static Int32 _threadsCount;
-
-        private static FileWriter _echoFileWriter;
-
-        private static ConsoleCommandReader _commandReader;
-        private static Client _client;
-
-
         static void Main(String[] args)
         {
-            Initialyze(args);
+            var container = ConfigureContainer(args);
+            var consoleWorker = container.Resolve<ConsoleWorker>();
+            var echoServer = container.Resolve<EchoServer>();
+            consoleWorker.Run();
 
-            Console.WriteLine($"{Type}... {_commandReader.ApplicationState}");
-            _commandReader.Run();
-
-            Dispose();
+            container.Dispose();
         }
-
-
-        // EVENTS /////////////////////////////////////////////////////////////////////////////////
-        private static void OnStartCommandEntered(Object sender, StartCommandEventArgs startCommandEventArgs)
+        private static IUnityContainer ConfigureContainer(String[] args)
         {
+            var container = new UnityContainer();
+            container.RegisterType<IMessenger, Messenger>(new ContainerControlledLifetimeManager());
+            container.RegisterInstance(CreateConfigFromCommandArgs(args));
 
+            container.RegisterType<ConsoleWorker>();
+            container.RegisterType<EchoServer>();
+
+            return container;
         }
-
-
-        // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
-        private static void Initialyze(String[] args)
+        private static NetworkConfig CreateConfigFromCommandArgs(String[] args)
         {
-            _proxyAddress = args[0];
-            _proxyPort = Int32.Parse(args[1]);
-            _threadsCount = Int32.Parse(args[2]);
+            var proxyAddress = args.Length > 0 ? args[0] : "127.0.0.1";
+            var proxyPort = args.Length > 1 ? Int32.Parse(args[1]) : 8888;
+            var numberOfThreads = args.Length > 1 ? Int32.Parse(args[2]) : 1;
+            if (numberOfThreads == 0)
+                throw new ArgumentException($"{nameof(numberOfThreads)} mast be above 0 but less than 3");
 
-            _echoFileWriter = new FileWriter("echo_send.txt");
-
-            _commandReader = new ConsoleCommandReader(Type);
-            _commandReader.StartCommandEntered += OnStartCommandEntered;
-        }
-        private static void Dispose()
-        {
-            _echoFileWriter?.Dispose();
-            _client?.Dispose();
+            return new NetworkConfig()
+            {
+                ProxyHost = proxyAddress,
+                ProxyPort = proxyPort,
+                NumberOfThreads = numberOfThreads,
+                ReconnectDelay = 3000
+            };
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Common.Enums
+﻿namespace Common.Models.Enums
 {
     public enum ServerType
     {

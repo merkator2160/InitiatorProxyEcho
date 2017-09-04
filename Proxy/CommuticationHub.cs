@@ -1,123 +1,110 @@
 ﻿using Common;
-using Common.Enums;
 using Common.Extensions;
-using Common.Models;
-using Common.Models.Event;
+using Common.Models.Enums;
+using Common.Models.MvvmLight;
+using Common.Models.Network;
+using GalaSoft.MvvmLight.Messaging;
 using Proxy.Models;
+using Server.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace Proxy
 {
     internal class CommuticationHub : IDisposable
     {
+        private readonly IMessenger _messenger;
+        private readonly NetworkConfig _config;
         private Boolean _disposed;
-        private readonly ConnectionListener _connectionListener;
-        private Client _initiatorClient;
-        private Client _echoClient;
+        private ConnectionBuffer _initiatorClient;
+        private ConnectionBuffer _echoClient;
+        private readonly ManualResetEventSlim _workingMres;
+        private readonly ConcurrentQueue<TcpClient> _newClientQueue;
 
 
-        public CommuticationHub(ConnectionListener communicationController)
+        public CommuticationHub(IMessenger messenger, NetworkConfig config)
         {
-            _connectionListener = communicationController;
-            _connectionListener.NewClientAvaliable += OnNewClientAvaliable;
-        }
-        ~CommuticationHub()
-        {
-            Dispose(false);
-        }
+            _config = config;
+            _messenger = messenger;
+            _messenger.Register<NewClientAvaliableMessage>(this, OnNewClientAvaliable);
 
+            _newClientQueue = new ConcurrentQueue<TcpClient>();
+            _workingMres = new ManualResetEventSlim(false);
 
-        public event UserNotificationAvaliableEventHandler UserNotificationAvaliable = (sender, args) => { };
+            ThreadPool.QueueUserWorkItem(NewClientHandlingThread);
 
-
-        // EVENTS /////////////////////////////////////////////////////////////////////////////////
-        private void OnNewClientAvaliable(Object sender, NewClientAvaliableEventArgs newClientAvaliableEventArgs)
-        {
-            CheckWhoIsIt(newClientAvaliableEventArgs.Client);
-        }
-        private void InitiatorClientOnMessageReceived(Object sender, MessageReceivedEventArgs messageReceivedEventArgs)
-        {
-            _initiatorClient.SendMessage(messageReceivedEventArgs.Message);
-        }
-        private void InitiatorClientOnStateMessageReceived(Object sender, StateMessageReceivedEventArgs stateMessageReceivedEventArgs)
-        {
-            UserNotificationAvaliable.Invoke(this, new UserNotificationAvaliableEventArgs($"Initiator Server: {stateMessageReceivedEventArgs.State}"));
-        }
-        private void InitiatorClientOnCommunicationErrorOccurred(Object sender, CommunicationErrorEventArgs communicationErrorEventArgs)
-        {
-            _initiatorClient.CommunicationErrorOccurred -= InitiatorClientOnCommunicationErrorOccurred;
-            _initiatorClient.MessageReceived -= InitiatorClientOnMessageReceived;
-            _initiatorClient.StateMessageReceived -= InitiatorClientOnStateMessageReceived;
-
-            _initiatorClient.Dispose();
-            _initiatorClient = null;
-
-            UserNotificationAvaliable.Invoke(this, new UserNotificationAvaliableEventArgs("Initiation Server connection is broken!"));
-        }
-        private void EchoClientOnMessageReceived(Object sender, MessageReceivedEventArgs messageReceivedEventArgs)
-        {
-
-        }
-        private void EchoClientOnStateMessageReceived(Object o, StateMessageReceivedEventArgs stateMessageReceivedEventArgs)
-        {
-            UserNotificationAvaliable.Invoke(this, new UserNotificationAvaliableEventArgs($"Echo Server: {stateMessageReceivedEventArgs.State}"));
-        }
-        private void EchoClientOnCommunicationErrorOccurred(Object sender, CommunicationErrorEventArgs communicationErrorEventArgs)
-        {
-            _echoClient.CommunicationErrorOccurred -= EchoClientOnCommunicationErrorOccurred;
-            _echoClient.MessageReceived -= EchoClientOnMessageReceived;
-            _echoClient.StateMessageReceived -= EchoClientOnStateMessageReceived;
-
-            _echoClient.Dispose();
-            _echoClient = null;
-
-            UserNotificationAvaliable.Invoke(this, new UserNotificationAvaliableEventArgs("Echo Server connection is broken!"));
+            for (var i = 0; i < _config.NumberOfThreads; i++)
+            {
+                ThreadPool.QueueUserWorkItem(InitiatorHandlerThread);
+                ThreadPool.QueueUserWorkItem(EchoHandlerThread);
+            }
         }
 
 
-        // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
+        // HANDLERS ///////////////////////////////////////////////////////////////////////////////
+        private void OnNewClientAvaliable(NewClientAvaliableMessage message)
+        {
+            _newClientQueue.Enqueue(message.Client);
+        }
+
+
+        // THREADS ////////////////////////////////////////////////////////////////////////////////
+        private void NewClientHandlingThread(Object state)
+        {
+            while (!_disposed)
+            {
+                try
+                {
+                    _workingMres.Wait();
+                    if (_newClientQueue.IsEmpty)
+                    {
+                        Thread.Sleep(10);
+                        continue;
+                    }
+
+                    if (_newClientQueue.TryDequeue(out TcpClient client))
+                    {
+                        CheckWhoIsIt(client);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+        }
         private void CheckWhoIsIt(TcpClient client)
         {
             try
             {
-                using (var stream = client.GetStream())
+                var stream = client.GetStream();
+                var responce = stream.ReadObject<NetworkMessage>();
+                if (responce.Type != MessageType.ConnectionRequest)
+                    return;
+                if (responce.Data == null)
+                    return;
+
+                var serverType = (ServerType)BitConverter.ToInt32(responce.Data, 0);
+                switch (serverType)
                 {
-                    stream.WriteObject(new Command()
-                    {
-                        Type = CommandType.WhoAreYou
-                    });
-
-                    var responce = stream.ReadObject<Command>();
-                    if (responce.Type != CommandType.WhoAreYou)
-                        return;
-                    if (responce.Data == null)
-                        return;
-
-                    var clientType = (ServerType)BitConverter.ToInt32(responce.Data, 0);
-                    switch (clientType)
-                    {
-                        case ServerType.Initiator:
-                            if (_initiatorClient != null)
-                            {
-                                _initiatorClient = new Client(client, ServerType.Proxy);
-                                _initiatorClient.CommunicationErrorOccurred += InitiatorClientOnCommunicationErrorOccurred;
-                                _initiatorClient.MessageReceived += InitiatorClientOnMessageReceived;
-                                _initiatorClient.StateMessageReceived += InitiatorClientOnStateMessageReceived;
-                            }
-                            break;
-
-                        case ServerType.Echo:
-                            if (_echoClient != null)
-                            {
-                                _echoClient = new Client(client, ServerType.Proxy);
-                                _echoClient.CommunicationErrorOccurred += EchoClientOnCommunicationErrorOccurred;
-                                _echoClient.MessageReceived += EchoClientOnMessageReceived;
-                                _echoClient.StateMessageReceived += EchoClientOnStateMessageReceived;
-                            }
-                            break;
-                    }
+                    case ServerType.Initiator:
+                        if (_initiatorClient == null)
+                        {
+                            _initiatorClient = new ConnectionBuffer(responce.ClientId.ToGuid(), _config.NumberOfThreads);
+                        }
+                        _initiatorClient.SetClient(client);
+                        break;
+                    case ServerType.Echo:
+                        if (_initiatorClient == null)
+                        {
+                            _echoClient = new ConnectionBuffer(responce.ClientId.ToGuid(), _config.NumberOfThreads);
+                        }
+                        _echoClient.SetClient(client);
+                        break;
                 }
             }
             catch (Exception ex)
@@ -128,30 +115,84 @@ namespace Proxy
         }
 
 
+        private void InitiatorHandlerThread(Object state)
+        {
+            while (!_disposed)
+            {
+                try
+                {
+                    _workingMres.Wait();
+                    if (_initiatorClient == null || !_initiatorClient.Connected || _initiatorClient.ReceivedMessageQueue.IsEmpty)
+                    {
+                        Thread.Sleep(10);
+                        continue;
+                    }
+
+                    HandleInitiatorServerMessage();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+        }
+        private void HandleInitiatorServerMessage()
+        {
+            if (_initiatorClient.ReceivedMessageQueue.TryDequeue(out NetworkMessage message))
+            {
+                switch (message.Type)
+                {
+                    case MessageType.ConnectionRequest:
+                        break;
+
+                    case MessageType.KeepAlive:
+                        break;
+
+                    case MessageType.Number:
+                        //var number = BitConverter.ToInt64(data, 0);
+                        _initiatorClient.SendMessageQueue.Enqueue(message);
+                        break;
+
+                    case MessageType.State:
+                        var initiatorState = (ServerState)BitConverter.ToInt32(message.Data, 0);
+                        _messenger.Send(new ConsoleMessage($"{ServerType.Initiator}... {initiatorState}"));
+                        break;
+                }
+            }
+        }
+
+
+        private void EchoHandlerThread(Object state)
+        {
+
+        }
+        private void HandleEchoServerMessage()
+        {
+
+        }
+
+
+        // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
+        public void Start()
+        {
+            _workingMres.Set();
+        }
+        public void Stop()
+        {
+            _workingMres.Reset();
+        }
+
+
         // IDisposable ////////////////////////////////////////////////////////////////////////////
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        protected virtual void Dispose(Boolean disposing)
-        {
             if (!_disposed)
             {
-                ReleaseUnmanagedResources();
-                if (disposing)
-                    ReleaseManagedResources();
-
                 _disposed = true;
+
+                _workingMres?.Dispose();
             }
-        }
-        private void ReleaseUnmanagedResources()
-        {
-            // We didn't have it yet.
-        }
-        private void ReleaseManagedResources()
-        {
-            _connectionListener?.Dispose();
         }
     }
 }

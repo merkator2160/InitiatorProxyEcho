@@ -1,16 +1,16 @@
 ﻿using System;
 
-namespace Initiator.Models
+namespace Common.Models.MvvmLight
 {
-    internal class NumberGeneratedEventArgs : EventArgs
+    public class HandledNumberMessage
     {
-        public NumberGeneratedEventArgs(Int64 number)
+        public HandledNumberMessage(Int64 number)
         {
             Number = number;
         }
 
 
         // PROPERTIES /////////////////////////////////////////////////////////////////////////////
-        public Int64 Number { get; }
+        public Int64 Number { get; set; }
     }
 }

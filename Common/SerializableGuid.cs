@@ -45,6 +45,7 @@ namespace Common
         }
 
 
+        // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
         public override Boolean Equals(Object obj)
         {
             return base.Equals(obj);
@@ -56,6 +57,10 @@ namespace Common
         public override String ToString()
         {
             return _value != null ? new Guid(_value).ToString() : String.Empty;
+        }
+        public Guid ToGuid()
+        {
+            return new Guid(_value);
         }
 
 

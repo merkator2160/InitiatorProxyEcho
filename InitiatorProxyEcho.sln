@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Initiator", "Initiator\Initiator.csproj", "{DA493ACC-9EA5-4088-B55A-A733C0A3F07C}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo", "Echo\Echo.csproj", "{1092518D-413D-46AB-83DF-4E10078DB0F1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{34E3AB60-3A83-46A2-BAEF-E1F810795B18}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,10 @@ Global
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

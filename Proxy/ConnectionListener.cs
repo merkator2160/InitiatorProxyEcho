@@ -1,4 +1,6 @@
-﻿using Proxy.Models;
+﻿using GalaSoft.MvvmLight.Messaging;
+using Proxy.Models;
+using Server.Models;
 using System;
 using System.Diagnostics;
 using System.Net.Sockets;
@@ -8,30 +10,45 @@ namespace Proxy
 {
     internal class ConnectionListener : IDisposable
     {
+        private readonly NetworkConfig _config;
+        private readonly IMessenger _messenger;
         private Boolean _disposed;
         private readonly TcpListener _tcpListener;
+        private readonly ManualResetEventSlim _workingMres;
 
 
-        public ConnectionListener(Int32 port)
+        public ConnectionListener(NetworkConfig config, IMessenger messenger)
         {
-            _tcpListener = TcpListener.Create(port);
-            _tcpListener.Start();
+            _config = config;
+            _messenger = messenger;
+            _workingMres = new ManualResetEventSlim(false);
+            _tcpListener = TcpListener.Create(_config.Port);
+
             ThreadPool.QueueUserWorkItem(AcceptNewClientThread);
         }
 
-
-        public delegate void NewClientAvaliableEventHandler(object sender, NewClientAvaliableEventArgs e);
-        public event NewClientAvaliableEventHandler NewClientAvaliable = (sender, args) => { };
+        // FUNCTONS ///////////////////////////////////////////////////////////////////////////////
+        public void Start()
+        {
+            _tcpListener.Start();
+            _workingMres.Set();
+        }
+        public void Stop()
+        {
+            _tcpListener.Stop();
+            _workingMres.Reset();
+        }
 
 
         // THREADS ////////////////////////////////////////////////////////////////////////////////
         private void AcceptNewClientThread(Object state)
         {
-            while (true)
+            while (!_disposed)
             {
                 try
                 {
-                    NewClientAvaliable.Invoke(this, new NewClientAvaliableEventArgs(_tcpListener.AcceptTcpClient()));
+                    _workingMres.Wait();
+                    _messenger.Send(new NewClientAvaliableMessage(_tcpListener.AcceptTcpClient()));
                 }
                 catch (Exception ex)
                 {
@@ -45,27 +62,13 @@ namespace Proxy
         // IDisposable ////////////////////////////////////////////////////////////////////////////
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        protected virtual void Dispose(Boolean disposing)
-        {
             if (!_disposed)
             {
-                ReleaseUnmanagedResources();
-                if (disposing)
-                    ReleaseManagedResources();
-
                 _disposed = true;
+
+                _workingMres?.Dispose();
+                _tcpListener?.Stop();
             }
-        }
-        private void ReleaseUnmanagedResources()
-        {
-            // We didn't have it yet.
-        }
-        private void ReleaseManagedResources()
-        {
-            _tcpListener?.Stop();
         }
     }
 }
