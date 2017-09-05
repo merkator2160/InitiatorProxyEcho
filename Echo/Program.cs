@@ -33,7 +33,7 @@ namespace Echo
             var proxyAddress = args.Length > 0 ? args[0] : "127.0.0.1";
             var proxyPort = args.Length > 1 ? Int32.Parse(args[1]) : 8888;
             var numberOfThreads = args.Length > 1 ? Int32.Parse(args[2]) : 1;
-            if (numberOfThreads == 0)
+            if (numberOfThreads == 0 || numberOfThreads > 3)
                 throw new ArgumentException($"{nameof(numberOfThreads)} mast be above 0 but less than 3");
 
             return new NetworkConfig()

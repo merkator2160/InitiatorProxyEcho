@@ -23,8 +23,9 @@ namespace Initiator
         private readonly NumberGenerator _numberGenerator;
         private readonly Dictionary<MessageType, Action<Byte[]>> _messageDictionary;
         private Boolean _disposed;
+        private Int64 _lastGeneratedNumber;
+        private Int64 _lastReceivedNumber;
 
-        private readonly ManualResetEventSlim _workingMres;
         private readonly ManualResetEventSlim _connectedMres;
 
         private static FileWriter _sendFileWriter;
@@ -52,7 +53,6 @@ namespace Initiator
             _messenger.Register<StopCommandEnteredMessage>(this, OnStopCommandEntered);
             _messenger.Register<ExitCommandEnteredMessage>(this, OnExitCommandEntered);
 
-            _workingMres = new ManualResetEventSlim(false);
             _connectedMres = new ManualResetEventSlim(true);
 
             _sendFileWriter = new FileWriter("initiator_send.txt");
@@ -148,13 +148,38 @@ namespace Initiator
         private void HandleNumberMessage(Byte[] data)
         {
             var number = BitConverter.ToInt64(data, 0);
+            Interlocked.Exchange(ref _lastReceivedNumber, number);
             _receiveFileWriter.WriteLine(number.ToString());
+        }
+
+
+        private void FinishingTransmissionThread(Object state)
+        {
+            while (!_disposed)
+            {
+                if (Interlocked.Read(ref _lastGeneratedNumber) < Interlocked.Read(ref _lastReceivedNumber))
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                _messenger.Send(new ConsoleMessage("Receiving transmission... Finished"));
+                Thread.Sleep(3000);
+
+                _serverState = ServerState.Exited;
+                _messenger.Send(new ConsoleMessage($"{Type}... {_serverState}"));
+                SendServerStatus(_serverState);
+
+                Thread.Sleep(1000);
+                Environment.Exit(0);
+            }
         }
 
 
         // EVENTS /////////////////////////////////////////////////////////////////////////////////
         private void OnNumberGenerated(NumberGeneratedMessage message)
         {
+            Interlocked.Exchange(ref _lastGeneratedNumber, message.Number);
             _sendFileWriter.WriteLine(message.Number.ToString());
             _bufferedClient.SendMessageQueue.Enqueue(new NetworkMessage()
             {
@@ -164,7 +189,6 @@ namespace Initiator
         }
         private void OnStartCommandEntered(StartCommandEnteredMessage message)
         {
-            _workingMres.Set();
             _numberGenerator.Start();
 
             _serverState = ServerState.Working;
@@ -173,7 +197,6 @@ namespace Initiator
         }
         private void OnStopCommandEntered(StopCommandEnteredMessage message)
         {
-            _workingMres.Reset();
             _numberGenerator.Stop();
 
             _serverState = ServerState.Suspended;
@@ -182,15 +205,8 @@ namespace Initiator
         }
         private void OnExitCommandEntered(ExitCommandEnteredMessage message)
         {
-            _workingMres.Reset();
             _numberGenerator.Stop();
-
-            _serverState = ServerState.Exited;
-            _messenger.Send(new ConsoleMessage($"{Type}... {_serverState}"));
-            SendServerStatus(_serverState);
-
-            Thread.Sleep(1000);
-            Environment.Exit(0);
+            ThreadPool.QueueUserWorkItem(FinishingTransmissionThread);
         }
 
 
@@ -217,7 +233,6 @@ namespace Initiator
 
                 _bufferedClient?.Dispose();
 
-                _workingMres?.Dispose();
                 _connectedMres?.Dispose();
             }
         }

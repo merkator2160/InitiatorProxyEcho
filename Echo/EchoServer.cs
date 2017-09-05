@@ -23,7 +23,6 @@ namespace Echo
         private readonly Dictionary<MessageType, Action<Byte[]>> _messageDictionary;
         private Boolean _disposed;
 
-        private readonly ManualResetEventSlim _workingMres;
         private readonly ManualResetEventSlim _connectedMres;
         private static FileWriter _echoSendFileWriter;
         private readonly ConnectionBuffer _bufferedClient;
@@ -47,7 +46,6 @@ namespace Echo
             _messenger.Register<StopCommandEnteredMessage>(this, OnStopCommandEntered);
             _messenger.Register<ExitCommandEnteredMessage>(this, OnExitCommandEntered);
 
-            _workingMres = new ManualResetEventSlim(false);
             _connectedMres = new ManualResetEventSlim(true);
 
             _echoSendFileWriter = new FileWriter("echo_send.txt");
@@ -155,24 +153,18 @@ namespace Echo
         // EVENTS /////////////////////////////////////////////////////////////////////////////////
         private void OnStartCommandEntered(StartCommandEnteredMessage message)
         {
-            _workingMres.Set();
-
             _serverState = ServerState.Working;
             _messenger.Send(new ConsoleMessage($"{Type}... {_serverState}"));
             SendServerStatus(_serverState);
         }
         private void OnStopCommandEntered(StopCommandEnteredMessage message)
         {
-            _workingMres.Reset();
-
             _serverState = ServerState.Suspended;
             _messenger.Send(new ConsoleMessage($"{Type}... {_serverState}"));
             SendServerStatus(_serverState);
         }
         private void OnExitCommandEntered(ExitCommandEnteredMessage message)
         {
-            _workingMres.Reset();
-
             _serverState = ServerState.Exited;
             _messenger.Send(new ConsoleMessage($"{Type}... {_serverState}"));
             SendServerStatus(_serverState);
@@ -205,7 +197,6 @@ namespace Echo
 
                 _bufferedClient?.Dispose();
 
-                _workingMres?.Dispose();
                 _connectedMres?.Dispose();
             }
         }

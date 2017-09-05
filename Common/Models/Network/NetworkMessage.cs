@@ -6,7 +6,7 @@ namespace Common.Models.Network
     [Serializable]
     public class NetworkMessage
     {
-        public SerializableGuid ClientId { get; set; }
+        public SerializableGuid SessionId { get; set; }
         public MessageType Type { get; set; }
         public Byte[] Data { get; set; }
     }

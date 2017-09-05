@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo", "Echo\Echo.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{34E3AB60-3A83-46A2-BAEF-E1F810795B18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,10 +41,6 @@ Global
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34E3AB60-3A83-46A2-BAEF-E1F810795B18}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EB878DB7-71ED-4BE8-A9F8-35FA7D786446}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -19,7 +19,7 @@ namespace Common
 
         public ConnectionBuffer(Guid id, Int32 numberOfthreads)
         {
-            Id = id;
+            SessionId = id;
             _workingMres = new ManualResetEventSlim(false);
 
             SendMessageQueue = new ConcurrentQueue<NetworkMessage>();
@@ -43,7 +43,7 @@ namespace Common
                 return _client.Connected;
             }
         }
-        public Guid Id { get; }
+        public Guid SessionId { get; }
         public ConcurrentQueue<NetworkMessage> SendMessageQueue { get; }
         public ConcurrentQueue<NetworkMessage> ReceivedMessageQueue { get; }
 
@@ -89,7 +89,7 @@ namespace Common
 
                     if (SendMessageQueue.TryDequeue(out NetworkMessage message))
                     {
-                        message.ClientId = Id;
+                        message.SessionId = SessionId;
                         _networkStream.WriteObject(message);
                     }
                 }

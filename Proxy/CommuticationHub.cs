@@ -94,14 +94,14 @@ namespace Proxy
                     case ServerType.Initiator:
                         if (_initiatorClient == null)
                         {
-                            _initiatorClient = new ConnectionBuffer(responce.ClientId.ToGuid(), _config.NumberOfThreads);
+                            _initiatorClient = new ConnectionBuffer(responce.SessionId.ToGuid(), _config.NumberOfThreads);
                         }
                         _initiatorClient.SetClient(client);
                         break;
                     case ServerType.Echo:
                         if (_initiatorClient == null)
                         {
-                            _echoClient = new ConnectionBuffer(responce.ClientId.ToGuid(), _config.NumberOfThreads);
+                            _echoClient = new ConnectionBuffer(responce.SessionId.ToGuid(), _config.NumberOfThreads);
                         }
                         _echoClient.SetClient(client);
                         break;
@@ -144,14 +144,11 @@ namespace Proxy
                 switch (message.Type)
                 {
                     case MessageType.ConnectionRequest:
-                        break;
-
                     case MessageType.KeepAlive:
                         break;
 
                     case MessageType.Number:
-                        //var number = BitConverter.ToInt64(data, 0);
-                        _initiatorClient.SendMessageQueue.Enqueue(message);
+                        _echoClient.SendMessageQueue.Enqueue(message);
                         break;
 
                     case MessageType.State:
@@ -165,11 +162,46 @@ namespace Proxy
 
         private void EchoHandlerThread(Object state)
         {
+            while (!_disposed)
+            {
+                try
+                {
+                    _workingMres.Wait();
+                    if (_echoClient == null || !_echoClient.Connected || _echoClient.ReceivedMessageQueue.IsEmpty)
+                    {
+                        Thread.Sleep(10);
+                        continue;
+                    }
 
+                    HandleEchoServerMessage();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    throw;
+                }
+            }
         }
         private void HandleEchoServerMessage()
         {
+            if (_echoClient.ReceivedMessageQueue.TryDequeue(out NetworkMessage message))
+            {
+                switch (message.Type)
+                {
+                    case MessageType.ConnectionRequest:
+                    case MessageType.KeepAlive:
+                        break;
 
+                    case MessageType.Number:
+                        _initiatorClient.SendMessageQueue.Enqueue(message);
+                        break;
+
+                    case MessageType.State:
+                        var initiatorState = (ServerState)BitConverter.ToInt32(message.Data, 0);
+                        _messenger.Send(new ConsoleMessage($"{ServerType.Echo}... {initiatorState}"));
+                        break;
+                }
+            }
         }
 
 
