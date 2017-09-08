@@ -1,5 +1,4 @@
 ﻿using Common;
-using Common.Models.MvvmLight;
 using GalaSoft.MvvmLight.Messaging;
 using Microsoft.Practices.Unity;
 using Proxy.Models;
@@ -58,10 +57,6 @@ namespace Proxy
                 Port = port,
                 NumberOfThreads = numberOfThreads
             };
-        }
-        private void PrintText(ConsoleMessage message)
-        {
-            Console.WriteLine(message.Text);
         }
     }
 }

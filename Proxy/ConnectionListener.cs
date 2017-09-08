@@ -14,14 +14,12 @@ namespace Proxy
         private readonly IMessenger _messenger;
         private Boolean _disposed;
         private readonly TcpListener _tcpListener;
-        private readonly ManualResetEventSlim _workingMres;
 
 
         public ConnectionListener(NetworkConfig config, IMessenger messenger)
         {
             _config = config;
             _messenger = messenger;
-            _workingMres = new ManualResetEventSlim(false);
             _tcpListener = TcpListener.Create(_config.Port);
 
             ThreadPool.QueueUserWorkItem(AcceptNewClientThread);
@@ -31,12 +29,10 @@ namespace Proxy
         public void Start()
         {
             _tcpListener.Start();
-            _workingMres.Set();
         }
         public void Stop()
         {
             _tcpListener.Stop();
-            _workingMres.Reset();
         }
 
 
@@ -47,8 +43,8 @@ namespace Proxy
             {
                 try
                 {
-                    _workingMres.Wait();
-                    _messenger.Send(new NewClientAvaliableMessage(_tcpListener.AcceptTcpClient()));
+                    var tcpClient = _tcpListener.AcceptTcpClient();
+                    _messenger.Send(new NewClientAvaliableMessage(tcpClient));
                 }
                 catch (Exception ex)
                 {
@@ -66,7 +62,6 @@ namespace Proxy
             {
                 _disposed = true;
 
-                _workingMres?.Dispose();
                 _tcpListener?.Stop();
             }
         }
