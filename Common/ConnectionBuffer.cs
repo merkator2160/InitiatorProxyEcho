@@ -17,9 +17,9 @@ namespace Common
         private readonly ManualResetEventSlim _workingMres;
 
 
-        public ConnectionBuffer(Guid id, Int32 numberOfthreads)
+        public ConnectionBuffer(Guid sessionId, Int32 numberOfthreads)
         {
-            SessionId = id;
+            SessionId = sessionId;
             _workingMres = new ManualResetEventSlim(false);
 
             SendMessageQueue = new ConcurrentQueue<NetworkMessage>();

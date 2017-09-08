@@ -21,7 +21,7 @@ namespace Initiator
         private readonly NetworkConfig _config;
         private readonly IMessenger _messenger;
         private readonly NumberGenerator _numberGenerator;
-        private readonly Dictionary<MessageType, Action<Byte[]>> _messageDictionary;
+        private readonly Dictionary<MessageType, Action<Byte[]>> _messageProcessingDictionary;
         private Boolean _disposed;
         private Int64 _lastGeneratedNumber;
         private Int64 _lastReceivedNumber;
@@ -39,7 +39,7 @@ namespace Initiator
             _config = config;
             _numberGenerator = numberGenerator;
             _bufferedClient = new ConnectionBuffer(Guid.NewGuid(), _config.NumberOfThreads);
-            _messageDictionary = new Dictionary<MessageType, Action<Byte[]>>()
+            _messageProcessingDictionary = new Dictionary<MessageType, Action<Byte[]>>()
             {
                 { MessageType.Number, HandleNumberMessage },
                 { MessageType.KeepAlive, (data) => { } },
@@ -130,7 +130,7 @@ namespace Initiator
 
                     if (_bufferedClient.ReceivedMessageQueue.TryDequeue(out NetworkMessage message))
                     {
-                        _messageDictionary[message.Type].Invoke(message.Data);
+                        _messageProcessingDictionary[message.Type].Invoke(message.Data);
                     }
                 }
                 catch (Exception ex)

@@ -11,9 +11,9 @@ namespace Common
         {
             _value = value;
         }
-        private SerializableGuid(Guid guid)
+        private SerializableGuid(Guid id)
         {
-            _value = guid.ToString();
+            _value = id.ToString();
         }
 
 
@@ -52,7 +52,7 @@ namespace Common
         }
         public override Int32 GetHashCode()
         {
-            return (_value != null ? _value.GetHashCode() : 0);
+            return _value != null ? _value.GetHashCode() : 0;
         }
         public override String ToString()
         {
@@ -61,6 +61,10 @@ namespace Common
         public Guid ToGuid()
         {
             return new Guid(_value);
+        }
+        public static SerializableGuid FromGuid(Guid id)
+        {
+            return new SerializableGuid(id);
         }
 
 
