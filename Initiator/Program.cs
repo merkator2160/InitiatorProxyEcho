@@ -10,12 +10,12 @@ namespace Initiator
     {
         public static void Main(String[] args)
         {
-            var container = ConfigureContainer(args);
-            var consoleWorker = container.Resolve<ConsoleWorker>();
-            var initiatorServer = container.Resolve<InitiatorServer>();
-            consoleWorker.Run();
-
-            container.Dispose();
+            using (var container = ConfigureContainer(args))
+            {
+                var consoleWorker = container.Resolve<ConsoleWorker>();
+                var initiatorServer = container.Resolve<InitiatorServer>();
+                consoleWorker.Run();
+            }
         }
         private static IUnityContainer ConfigureContainer(String[] args)
         {

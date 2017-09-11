@@ -10,12 +10,12 @@ namespace Echo
     {
         static void Main(String[] args)
         {
-            var container = ConfigureContainer(args);
-            var consoleWorker = container.Resolve<ConsoleWorker>();
-            var echoServer = container.Resolve<EchoServer>();
-            consoleWorker.Run();
-
-            container.Dispose();
+            using (var container = ConfigureContainer(args))
+            {
+                var consoleWorker = container.Resolve<ConsoleWorker>();
+                var echoServer = container.Resolve<EchoServer>();
+                consoleWorker.Run();
+            }
         }
         private static IUnityContainer ConfigureContainer(String[] args)
         {

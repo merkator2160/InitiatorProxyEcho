@@ -14,12 +14,12 @@ namespace Proxy
         static void Main(String[] args)
         {
             CheckForAnotherInstances();
-            var container = ConfigureContainer(args);
-            var consoleWorker = container.Resolve<ConsoleWorker>();
-            var proxyServer = container.Resolve<ProxyServer>();
-            consoleWorker.Run();
-
-            container.Dispose();
+            using (var container = ConfigureContainer(args))
+            {
+                var consoleWorker = container.Resolve<ConsoleWorker>();
+                var proxyServer = container.Resolve<ProxyServer>();
+                consoleWorker.Run();
+            }
         }
         private static void CheckForAnotherInstances()
         {

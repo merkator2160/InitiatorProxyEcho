@@ -11,6 +11,6 @@ namespace Initiator.Models
 
 
         // PROPERTIES /////////////////////////////////////////////////////////////////////////////
-        public Int64 Number { get; set; }
+        public Int64 Number { get; }
     }
 }

@@ -65,10 +65,11 @@ namespace Common
                     var receivedMessage = _networkStream.ReadObject<NetworkMessage>();
                     ReceivedMessageQueue.Enqueue(receivedMessage);
                 }
-                catch (SocketException ex) { }
-                catch (IOException ex) { }
                 catch (Exception ex)
                 {
+                    if (ex is SocketException || ex is IOException)
+                        return;
+
                     Debug.WriteLine(ex.Message);
                     throw;
                 }
@@ -93,10 +94,11 @@ namespace Common
                         _networkStream.WriteObject(message);
                     }
                 }
-                catch (SocketException ex) { }
-                catch (IOException ex) { }
                 catch (Exception ex)
                 {
+                    if (ex is SocketException || ex is IOException)
+                        return;
+
                     Debug.WriteLine(ex.Message);
                     throw;
                 }
