@@ -5,11 +5,12 @@ VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Initiator", "Initiator\Initiator.csproj", "{DA493ACC-9EA5-4088-B55A-A733C0A3F07C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{432B18EF-A6D8-4A00-9E7B-4BED069566B3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{432B18EF-A6D8-4A00-9E7B-4BED069566B3}"
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		clean-with-scc.bat = clean-with-scc.bat
+		readme.md = readme.md
 		Test-C++_C#_Java_Scala.pdf = Test-C++_C#_Java_Scala.pdf
 	EndProjectSection
 EndProject
